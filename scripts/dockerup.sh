@@ -1,4 +1,6 @@
 #!/bin/bash
+source .env
+
 docker compose up -d
 
 echo "Waiting for setup docker images... (15s)"
