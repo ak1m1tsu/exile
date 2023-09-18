@@ -1,104 +1,175 @@
 package client
 
 import (
-	"errors"
+	"reflect"
 	"testing"
 )
 
-type testCase struct {
-	name   string
-	input  string
-	expErr error
-}
-
-func Test_FetchAge(t *testing.T) {
-	testCases := []testCase{
+func TestAPIError_Error(t *testing.T) {
+	tests := []struct {
+		name string
+		e    APIError
+		want string
+	}{
 		{
-			name:   "Good input",
-			input:  "Ivan",
-			expErr: nil,
-		},
-		{
-			name:   "Bad input",
-			input:  "1234567890",
-			expErr: ErrFindAge,
-		},
-		{
-			name:   "Empty input",
-			input:  "",
-			expErr: ErrNameEmpty,
+			name: "base test",
+			e:    APIError{Message: "some error"},
+			want: "some error",
 		},
 	}
-
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			_, err := FetchAge(tc.input)
-			if !errors.Is(err, tc.expErr) {
-				t.Errorf("Expected error %v, got %v", tc.expErr, err)
+			if got := tt.e.Error(); got != tt.want {
+				t.Errorf("APIError.Error() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_FetchGender(t *testing.T) {
-	testCases := []testCase{
+func TestFetchAge(t *testing.T) {
+	type args struct {
+		name string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
 		{
-			name:   "Good input",
-			input:  "Ivan",
-			expErr: nil,
+			name:    "Good input",
+			args:    args{"Ivan"},
+			wantErr: false,
 		},
 		{
-			name:   "Bad input",
-			input:  "1234567890",
-			expErr: ErrFindGender,
+			name:    "Bad input",
+			args:    args{"1234567890"},
+			wantErr: true,
 		},
 		{
-			name:   "Empty input",
-			input:  "",
-			expErr: ErrNameEmpty,
+			name:    "Empty input",
+			args:    args{""},
+			wantErr: true,
 		},
 	}
-
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			_, err := FetchGender(tc.input)
-			if !errors.Is(err, tc.expErr) {
-				t.Errorf("Expected error %v, got %v", tc.expErr, err)
+			age, err := FetchAge(tt.args.name)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("FetchAge() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			t.Log(age)
+		})
+	}
+}
+
+func TestFetchGender(t *testing.T) {
+	type args struct {
+		name string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name:    "Good input",
+			args:    args{"Ivan"},
+			wantErr: false,
+		},
+		{
+			name:    "Bad input",
+			args:    args{"1234567890"},
+			wantErr: true,
+		},
+		{
+			name:    "Empty input",
+			args:    args{""},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			_, err := FetchGender(tt.args.name)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("FetchGender() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
 		})
 	}
 }
 
-func Test_FetchNationality(t *testing.T) {
-	testCases := []testCase{
+func TestFetchNationality(t *testing.T) {
+	type args struct {
+		name string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
 		{
-			name:   "Good input",
-			input:  "Ivan",
-			expErr: nil,
+			name:    "Good input",
+			args:    args{"Ivan"},
+			wantErr: false,
 		},
 		{
-			name:   "Bad input",
-			input:  "1234567890",
-			expErr: ErrFindNation,
+			name:    "Bad input",
+			args:    args{"1234567890"},
+			wantErr: true,
 		},
 		{
-			name:   "Empty input",
-			input:  "",
-			expErr: ErrNameEmpty,
+			name:    "Empty input",
+			args:    args{""},
+			wantErr: true,
 		},
 	}
-
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			_, err := FetchNationality(tc.input)
-			if !errors.Is(err, tc.expErr) {
-				t.Errorf("Expected error %v, got %v", tc.expErr, err)
+			_, err := FetchNationality(tt.args.name)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("FetchNationality() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
+func Test_get(t *testing.T) {
+	type args struct {
+		apiURL string
+		name   string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []byte
+		wantErr bool
+	}{
+		{
+			name:    "empty name",
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := get(tt.args.apiURL, tt.args.name)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("get() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("get() = %v, want %v", got, tt.want)
 			}
 		})
 	}

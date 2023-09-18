@@ -9,11 +9,11 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	_ "github.com/lib/pq"
 	"github.com/redis/go-redis/v9"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/errtools"
 )
 
 var (
 	ErrNilDB                = errors.New("the database pool is nil")
+	ErrNilRedisClient       = errors.New("the redis client is nil")
 	ErrURLEmpty             = errors.New("the url is empty")
 	ErrUnsupportedParamType = errors.New("the query param have unsupported type")
 )
@@ -22,22 +22,20 @@ var (
 //
 // If url is empty ErrURLEmpty is returned.
 func NewPostgresPool(url string) (*sql.DB, error) {
-	const op = "storage.NewPostgresPool"
-
 	if url == "" {
-		return nil, errtools.WithOperation(ErrURLEmpty, op)
+		return nil, ErrURLEmpty
 	}
 
 	db, err := sql.Open("postgres", url)
 	if err != nil {
-		return nil, errtools.WithOperation(err, op)
+		return nil, err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err = db.PingContext(ctx); err != nil {
-		return nil, errtools.WithOperation(err, op)
+		return nil, err
 	}
 
 	return db, nil
@@ -47,15 +45,13 @@ func NewPostgresPool(url string) (*sql.DB, error) {
 //
 // If url is empty ErrURLEmpty is returned.
 func NewRedisClient(url string) (*redis.Client, error) {
-	const op = "storage.NewRedisClient"
-
 	if url == "" {
-		return nil, errtools.WithOperation(ErrURLEmpty, op)
+		return nil, ErrURLEmpty
 	}
 
 	opts, err := redis.ParseURL(url)
 	if err != nil {
-		return nil, errtools.WithOperation(err, op)
+		return nil, err
 	}
 
 	client := redis.NewClient(opts)
@@ -64,7 +60,7 @@ func NewRedisClient(url string) (*redis.Client, error) {
 	defer cancel()
 
 	if err = client.Ping(ctx).Err(); err != nil {
-		return nil, errtools.WithOperation(err, op)
+		return nil, err
 	}
 
 	return client, nil
@@ -74,15 +70,13 @@ func NewRedisClient(url string) (*redis.Client, error) {
 //
 // Consumer subscribes to the given topics.
 func NewKafkaConsumer(cfg *kafka.ConfigMap, topics []string) (*kafka.Consumer, error) {
-	const op = "storage.NewKafkaConsumer"
-
 	consumer, err := kafka.NewConsumer(cfg)
 	if err != nil {
-		return nil, errtools.WithOperation(err, op)
+		return nil, err
 	}
 
 	if err = consumer.SubscribeTopics(topics, nil); err != nil {
-		return nil, errtools.WithOperation(err, op)
+		return nil, err
 	}
 
 	return consumer, nil
@@ -90,11 +84,9 @@ func NewKafkaConsumer(cfg *kafka.ConfigMap, topics []string) (*kafka.Consumer, e
 
 // NewKafkaProducer creates a new kafka producer.
 func NewKafkaProducer(cfg *kafka.ConfigMap) (*kafka.Producer, error) {
-	const op = "storage.NewKafkaProducer"
-
 	producer, err := kafka.NewProducer(cfg)
 	if err != nil {
-		return nil, errtools.WithOperation(err, op)
+		return nil, err
 	}
 
 	return producer, nil

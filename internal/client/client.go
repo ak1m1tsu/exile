@@ -18,10 +18,10 @@ const (
 )
 
 var (
-	ErrNameEmpty  = errors.New("the name param is empty")
-	ErrFindNation = errors.New("could not find nationality for the name")
-	ErrFindGender = errors.New("could not find gender for the name")
-	ErrFindAge    = errors.New("could not find age for the name")
+	ErrNameEmpty       = errors.New("the name param is empty")
+	ErrFindNationality = errors.New("could not find nationality for the name")
+	ErrFindGender      = errors.New("could not find gender for the name")
+	ErrFindAge         = errors.New("could not find age for the name")
 )
 
 // APIError represents an error returned from the Genderize API.
@@ -61,7 +61,7 @@ func FetchAge(name string) (int, error) {
 		return 0, errtools.WithOperation(ErrFindAge, op)
 	}
 
-	return 0, nil
+	return resp.Age, nil
 }
 
 type genderizeResponse struct {
@@ -113,7 +113,7 @@ func FetchNationality(name string) (string, error) {
 	}
 
 	if len(resp.Country) == 0 {
-		return "", errtools.WithOperation(ErrFindNation, op)
+		return "", errtools.WithOperation(ErrFindNationality, op)
 	}
 
 	return resp.Country[0].ID, nil
