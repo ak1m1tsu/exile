@@ -1,11 +1,66 @@
 version: '3'
 
+networks:
+  worknet:
+    driver: bridge
+
+volumes:
+  pg-data:
+    driver: local
+  redis-data:
+    driver: local
+
 services:
-  kafka:
+  api:
+    container_name: api
+    build:
+      context: .
+      dockerfile: ./build/api/Dockerfile
+    depends_on:
+      - postgres
+      - broker
+      - redis
+    ports:
+      - "${API_PORT}:${API_PORT}"
+    networks:
+      - worknet
+    environment:
+      ENV: ${API_ENV}
+      PORT: ${API_PORT}
+      IDLE_TIMEOUT: ${API_IDLE_TIMEOUT}
+      READ_TIMEOUT: ${API_READ_TIMEOUT}
+      WRITE_TIMEOUT: ${API_WRITE_TIMEOUT}
+      DATABASE_URL: ${DATABASE_URL}
+      CACHE_URL: ${CACHE_URL}
+      KAFKA_BOOTSTRAP_SERVERS: ${API_KAFKA_BOOTSTRAP_SERVERS}
+      KAFKA_PRODUCER_TOPIC: ${API_KAFKA_PRODUCER_TOPIC}
+  service:
+    container_name: service
+    build:
+      context: .
+      dockerfile: ./build/service/Dockerfile
+    depends_on:
+      - broker
+      - postgres
+    networks:
+      - worknet
+    environment:
+      ENV: ${SERVICE_ENV}
+      DATABASE_URL: ${DATABASE_URL}
+      CACHE_URL: ${CACHE_URL}
+      KAFKA_GROUP_ID: ${SERVICE_KAFKA_GROUP_ID}
+      KAFKA_BOOTSTRAP_SERVERS: ${SERVICE_KAFKA_BOOTSTRAP_SERVERS}
+      KAFKA_AUTO_OFFSET_RESET: ${SERVICE_KAFKA_AUTO_OFFSET_RESET}
+      KAFKA_PRODUCER_TOPIC: ${SERVICE_KAFKA_PRODUCER_TOPIC}
+      KAFKA_CONSUMER_TOPICS: ${SERVICE_KAFKA_CONSUMER_TOPICS}
+      KAFKA_TIMEOUT: ${SERVICE_KAFKA_TIMEOUT}
+  broker:
     image: confluentinc/cp-kafka:7.5.0
     container_name: broker
     ports:
       - "9092:9092"
+    networks:
+      - worknet
     environment:
       KAFKA_BROKER_ID: ${KAFKA_BROKER_ID}
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
@@ -29,6 +84,10 @@ services:
     container_name: db
     ports:
       - "5432:5432"
+    networks:
+      - worknet
+    volumes:
+      - pg-data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -38,5 +97,9 @@ services:
     container_name: cache
     ports:
       - "6379:6379"
+    networks:
+      - worknet
+    volumes:
+      - redis-data:/data
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}

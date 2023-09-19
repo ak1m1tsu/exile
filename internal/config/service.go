@@ -22,15 +22,10 @@ type ServiceConfig struct {
 }
 
 func LoadServiceConfig() (*ServiceConfig, error) {
-	path, err := getPath("SERVICE_CONFIG_PATH")
-	if err != nil {
-		return nil, err
-	}
-
 	cfg := ServiceConfig{
 		KafkaMap: kafka.ConfigMap{},
 	}
-	if err := cleanenv.ReadConfig(path, &cfg); err != nil {
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
 		return nil, err
 	}
 

@@ -1,13 +1,13 @@
-docker compose exec kafka \
+docker compose exec broker \
   kafka-topics --create \
     --topic FIO \
-    --bootstrap-server localhost:9092 \
+    --bootstrap-server broker:9092 \
     --replication-factor 1 \
     --partitions 1
 
-docker compose exec kafka \
+docker compose exec broker \
   kafka-topics --create \
     --topic FIO_FAILED \
-    --bootstrap-server localhost:9092 \
+    --bootstrap-server broker:9092 \
     --replication-factor 1 \
     --partitions 1
