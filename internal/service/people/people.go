@@ -50,6 +50,14 @@ func WithPostgresPersonStorage(url string) Option {
 	}
 }
 
+func WithCache(c cache.Cache, ttl time.Duration) Option {
+	return func(s *Service) error {
+		s.cache = c
+		s.cacheTTL = ttl
+		return nil
+	}
+}
+
 // WithRedisCache injects redis client into the people service
 func WithRedisCache(url string) Option {
 	return func(s *Service) error {
@@ -63,9 +71,7 @@ func WithRedisCache(url string) Option {
 			return err
 		}
 
-		s.cache = cache
-		s.cacheTTL = time.Minute * 5
-		return nil
+		return WithCache(cache, 5*time.Minute)(s)
 	}
 }
 
@@ -204,6 +210,6 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 }
 
 // Close flushes and closes the producer
-func (s *Service) Close() {
-	s.producer.Close()
+func (s *Service) Close() error {
+	return s.producer.Close()
 }
