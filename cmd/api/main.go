@@ -14,6 +14,7 @@ import (
 	"github.com/romankravchuk/effective-mobile-test-task/internal/config"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/sl"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/log"
+	"github.com/romankravchuk/effective-mobile-test-task/internal/server/graphql/person"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/handlers/person/delete"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/handlers/person/get"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/handlers/person/list"
@@ -49,6 +50,8 @@ func main() {
 			r.Get("/", get.New(log, svc))
 			r.Patch("/", update.New(log, svc))
 		})
+
+		r.Handle("/graphql", person.New(log, svc))
 	})
 
 	log.Info("the api starting", slog.String("port", cfg.Port))

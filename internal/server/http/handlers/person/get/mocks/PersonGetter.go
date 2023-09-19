@@ -16,18 +16,20 @@ type PersonGetter struct {
 }
 
 // Get provides a mock function with given fields: ctx, id
-func (_m *PersonGetter) Get(ctx context.Context, id string) (models.Person, error) {
+func (_m *PersonGetter) Get(ctx context.Context, id string) (*models.Person, error) {
 	ret := _m.Called(ctx, id)
 
-	var r0 models.Person
+	var r0 *models.Person
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (models.Person, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*models.Person, error)); ok {
 		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) models.Person); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *models.Person); ok {
 		r0 = rf(ctx, id)
 	} else {
-		r0 = ret.Get(0).(models.Person)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Person)
+		}
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {

@@ -15,11 +15,11 @@ type Storage struct {
 }
 
 // Create provides a mock function with given fields: _a0, _a1
-func (_m *Storage) Create(_a0 context.Context, _a1 models.Person) error {
+func (_m *Storage) Create(_a0 context.Context, _a1 *models.Person) error {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, models.Person) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Person) error); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
@@ -69,15 +69,15 @@ func (_m *Storage) FindByID(_a0 context.Context, _a1 string) (*models.Person, er
 }
 
 // List provides a mock function with given fields: _a0, _a1
-func (_m *Storage) List(_a0 context.Context, _a1 map[string]interface{}) ([]models.Person, error) {
+func (_m *Storage) List(_a0 context.Context, _a1 *models.Filter) ([]models.Person, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 []models.Person
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, map[string]interface{}) ([]models.Person, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Filter) ([]models.Person, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, map[string]interface{}) []models.Person); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Filter) []models.Person); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
@@ -85,7 +85,7 @@ func (_m *Storage) List(_a0 context.Context, _a1 map[string]interface{}) ([]mode
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, map[string]interface{}) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *models.Filter) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

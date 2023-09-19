@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/errtools"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/models"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/storage"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/storage/person"
@@ -21,10 +20,8 @@ type Storage struct {
 //
 // If db is nil returns storage.ErrNilDB.
 func New(db *sql.DB) (*Storage, error) {
-	const op = "storage.person.pg.New"
-
 	if db == nil {
-		return nil, errtools.WithOperation(storage.ErrNilDB, op)
+		return nil, storage.ErrNilDB
 	}
 
 	return &Storage{db: db}, nil
@@ -34,37 +31,33 @@ func New(db *sql.DB) (*Storage, error) {
 //
 // If user not found returns person.ErrNotFound.
 func (s *Storage) FindByID(ctx context.Context, id string) (*models.Person, error) {
-	const (
-		op    = "storage.person.pg.Storage.FindByID"
-		query = `
-		SELECT
-			id,
-			name,
-			surname,
-			patronymic,
-			age,
-			gender,
-			nationality,
-			created_on
-		FROM people
-		WHERE id = $1
+	const query = `
+	SELECT
+		id,
+		name,
+		surname,
+		patronymic,
+		age,
+		gender,
+		nationality
+	FROM people
+	WHERE id = $1 AND is_deleted = FALSE
 		`
-	)
 
 	stmt, err := s.db.PrepareContext(ctx, query)
 	if err != nil {
-		return nil, errtools.WithOperation(err, op)
+		return nil, err
 	}
 	defer stmt.Close()
 
 	var p models.Person
 	if err = stmt.QueryRowContext(ctx, id).
-		Scan(&p.ID, &p.Name, &p.Surname, &p.Patronymic, &p.Age, &p.Gender, &p.Nationality, &p.CreatedOn); err != nil {
+		Scan(&p.ID, &p.Name, &p.Surname, &p.Patronymic, &p.Age, &p.Gender, &p.Nationality); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errtools.WithOperation(person.ErrNotFound, op)
+			return nil, person.ErrNotFound
 		}
 
-		return nil, errtools.WithOperation(err, op)
+		return nil, err
 	}
 
 	return &p, nil
@@ -75,14 +68,12 @@ func (s *Storage) FindByID(ctx context.Context, id string) (*models.Person, erro
 // If person is nil returns person.ErrNilPerson.
 // If person not found or the person ID is empty string returns person.ErrNotFound.
 func (s *Storage) Update(ctx context.Context, p *models.Person) error {
-	const op = "storage.person.pg.Storage.Update"
-
 	if p == nil {
-		return errtools.WithOperation(person.ErrNilPerson, op)
+		return person.ErrNilPerson
 	}
 
 	if p.ID == "" {
-		return errtools.WithOperation(person.ErrNotFound, op)
+		return person.ErrNilPerson
 	}
 
 	query := `UPDATE people SET `
@@ -120,32 +111,29 @@ func (s *Storage) Update(ctx context.Context, p *models.Person) error {
 	}
 
 	if len(args) == 0 {
-		return errtools.WithOperation(person.ErrNotFound, op)
+		return person.ErrNilPerson
 	}
 
 	args = append(args, p.ID)
 	query += fmt.Sprintf(
-		"%s WHERE id = $%d RETURNING name, surname, patronymic, age, gender, nationality, created_on",
+		"%s WHERE id = $%d RETURNING name, surname, patronymic, age, gender, nationality",
 		strings.Join(queryParts, ", "),
 		len(args),
 	)
 
 	stmt, err := s.db.PrepareContext(ctx, query)
 	if err != nil {
-		return errtools.WithOperation(err, op)
+		return err
 	}
 	defer stmt.Close()
 
 	if err := stmt.QueryRowContext(ctx, args...).
-		Scan(&p.Name, &p.Surname,
-			&p.Patronymic, &p.Age, &p.Gender,
-			&p.Nationality, &p.CreatedOn,
-		); err != nil {
+		Scan(&p.Name, &p.Surname, &p.Patronymic, &p.Age, &p.Gender, &p.Nationality); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return errtools.WithOperation(person.ErrNotFound, op)
+			return person.ErrNilPerson
 		}
 
-		return errtools.WithOperation(err, op)
+		return err
 	}
 
 	return nil
@@ -154,25 +142,24 @@ func (s *Storage) Update(ctx context.Context, p *models.Person) error {
 // Create creates a new person.
 //
 // The ID and CreatedOn must be filled by the database.
-func (s *Storage) Create(ctx context.Context, p models.Person) error {
-	const (
-		op    = "storage.person.pg.Storage.Create"
-		query = `
-		INSERT INTO people
-			(name, surname, patronymic, age, gender, nationality)
-		VALUES
-			($1, $2, $3, $4, $5, $6)
-		`
-	)
+func (s *Storage) Create(ctx context.Context, p *models.Person) error {
+	const query = `
+	INSERT INTO people
+		(name, surname, patronymic, age, gender, nationality)
+	VALUES
+		($1, $2, $3, $4, $5, $6)
+	RETURNING id, name, surname, patronymic, age, gender, nationality
+	`
 
 	stmt, err := s.db.PrepareContext(ctx, query)
 	if err != nil {
-		return errtools.WithOperation(err, op)
+		return err
 	}
 	defer stmt.Close()
 
-	if _, err := stmt.ExecContext(ctx, p.Name, p.Surname, p.Patronymic, p.Age, p.Gender, p.Nationality); err != nil {
-		return errtools.WithOperation(err, op)
+	if err := stmt.QueryRowContext(ctx, p.Name, p.Surname, p.Patronymic, p.Age, p.Gender, p.Nationality).
+		Scan(&p.ID, &p.Name, &p.Surname, &p.Patronymic, &p.Age, &p.Gender, &p.Nationality); err != nil {
+		return err
 	}
 
 	return nil
@@ -183,8 +170,6 @@ func (s *Storage) Create(ctx context.Context, p models.Person) error {
 // If param have unsupported type returns storage.ErrUnsupportedParamType.
 // The param type can be int, float64, float32, uint, string.
 func (s *Storage) List(ctx context.Context, filter *models.Filter) ([]models.Person, error) {
-	const op = "storage.person.pg.Storage.List"
-
 	var (
 		where              []string
 		args               int
@@ -226,54 +211,48 @@ func (s *Storage) List(ctx context.Context, filter *models.Filter) ([]models.Per
 	skip = fmt.Sprintf("OFFSET %d", filter.Skip)
 
 	if args > 0 {
-		query = fmt.Sprint(`SELECT id, name, surname, patronymic, age, gender, nationality, created_on
+		query = fmt.Sprint(`SELECT id, name, surname, patronymic, age, gender, nationality
 		FROM people
-		WHERE `, strings.Join(where, " AND "), `
-		ORDER BY created_on DESC `, limit, ` `, skip)
+		WHERE is_deleted = FALSE `, strings.Join(where, " AND "), ` `, limit, ` `, skip)
 	} else {
-		query = fmt.Sprint(`SELECT id, name, surname, patronymic, age, gender, nationality, created_on
-		FROM people
-		ORDER BY created_on DESC `, limit, ` `, skip)
+		query = fmt.Sprint(`SELECT id, name, surname, patronymic, age, gender, nationality
+		FROM people WHERE is_deleted = FALSE `, limit, ` `, skip)
 	}
 
 	stmt, err := s.db.PrepareContext(ctx, query)
 	if err != nil {
-		return nil, errtools.WithOperation(err, op)
+		return nil, err
 	}
 	defer stmt.Close()
 
 	rows, err := stmt.QueryContext(ctx)
 	if err != nil {
-		return nil, errtools.WithOperation(err, op)
+		return nil, err
 	}
 
 	var people []models.Person
 	for rows.Next() {
 		var p models.Person
-		if err = rows.Scan(
-			&p.ID, &p.Name, &p.Surname,
-			&p.Patronymic, &p.Age, &p.Gender,
-			&p.Nationality, &p.CreatedOn,
-		); err != nil {
+		if err = rows.Scan(&p.ID, &p.Name, &p.Surname, &p.Patronymic, &p.Age, &p.Gender, &p.Nationality); err != nil {
 			break
 		}
 		people = append(people, p)
 	}
 
 	if len(people) == 0 {
-		return nil, errtools.WithOperation(person.ErrNotFoundMany, op)
+		return nil, person.ErrNotFoundMany
 	}
 
 	if closeErr := rows.Close(); closeErr != nil {
-		return nil, errtools.WithOperation(closeErr, op)
+		return nil, closeErr
 	}
 
 	if err != nil {
-		return nil, errtools.WithOperation(err, op)
+		return nil, err
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, errtools.WithOperation(err, op)
+		return nil, err
 	}
 
 	return people, nil
@@ -283,22 +262,19 @@ func (s *Storage) List(ctx context.Context, filter *models.Filter) ([]models.Per
 //
 // Actually it sets is_delete field to true in database.
 func (s *Storage) Delete(ctx context.Context, id string) error {
-	const (
-		op    = "storage.person.pg.Storage.Delete"
-		query = "UPDATE people SET is_deleted = true WHERE id = $1"
-	)
+	const query = "UPDATE people SET is_deleted = TRUE WHERE id = $1"
 
 	stmt, err := s.db.PrepareContext(ctx, query)
 	if err != nil {
-		return errtools.WithOperation(err, op)
+		return err
 	}
 	defer stmt.Close()
 
 	if res, err := stmt.ExecContext(ctx, id); err != nil {
-		return errtools.WithOperation(err, op)
+		return err
 	} else {
 		if count, err := res.RowsAffected(); err != nil || count == 0 {
-			return errtools.WithOperation(person.ErrNotFound, op)
+			return person.ErrNotFound
 		}
 	}
 

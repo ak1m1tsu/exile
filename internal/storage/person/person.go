@@ -17,7 +17,7 @@ var (
 type Storage interface {
 	FindByID(context.Context, string) (*models.Person, error)
 	Update(context.Context, *models.Person) error
-	Create(context.Context, models.Person) error
+	Create(context.Context, *models.Person) error
 	List(context.Context, *models.Filter) ([]models.Person, error)
 	Delete(context.Context, string) error
 }

@@ -12,8 +12,11 @@ require (
 	github.com/go-playground/validator/v10 v10.15.4
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/schema v1.2.0
+	github.com/graphql-go/graphql v0.8.1
+	github.com/graphql-go/handler v0.2.3
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/lib/pq v1.10.9
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/redis/go-redis/v9 v9.1.0
 	github.com/stretchr/testify v1.8.2
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c

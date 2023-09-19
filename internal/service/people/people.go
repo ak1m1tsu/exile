@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	kfk "github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/validator"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/models"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/service"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/storage"
+	"github.com/romankravchuk/effective-mobile-test-task/internal/storage/broker"
+	brokerkafka "github.com/romankravchuk/effective-mobile-test-task/internal/storage/broker/kafka"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/storage/cache"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/storage/cache/redis"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/storage/person"
@@ -20,13 +22,13 @@ import (
 type Option func(s *Service) error
 
 // WithPersonStorage injects user storage into the people service
-func WithPersonStorage(users person.Storage) Option {
+func WithPersonStorage(people person.Storage) Option {
 	return func(s *Service) error {
-		if users == nil {
-			return service.ErrNilUserStorage
+		if people == nil {
+			return service.ErrNilPeopleStorage
 		}
 
-		s.people = users
+		s.people = people
 		return nil
 	}
 }
@@ -67,21 +69,32 @@ func WithRedisCache(url string) Option {
 	}
 }
 
-// WithKafkaProducer injects kafka producer into the people service
-func WithKafkaProducer(cfg *kafka.ConfigMap, topic string) Option {
+func WithProducer(producer broker.Producer, topic string) Option {
 	return func(s *Service) error {
-		if cfg == nil {
-			return service.ErrNilKafkaConfig
-		}
-
-		producer, err := storage.NewKafkaProducer(cfg)
-		if err != nil {
-			return err
+		if producer == nil {
+			return service.ErrNilProducer
 		}
 
 		s.producer = producer
 		s.topic = topic
 		return nil
+	}
+}
+
+// WithKafkaProducer injects kafka producer into the people service
+func WithKafkaProducer(cfg *kfk.ConfigMap, topic string) Option {
+	return func(s *Service) error {
+		if cfg == nil {
+			return service.ErrNilKafkaConfig
+		}
+
+		kafkaProducer, err := storage.NewKafkaProducer(cfg)
+		if err != nil {
+			return err
+		}
+
+		p := brokerkafka.NewProducer(kafkaProducer, topic)
+		return WithProducer(p, topic)(s)
 	}
 }
 
@@ -92,7 +105,7 @@ type Service struct {
 	cache    cache.Cache `validate:"required"`
 	cacheTTL time.Duration
 
-	producer *kafka.Producer
+	producer broker.Producer
 	topic    string
 }
 
@@ -119,13 +132,7 @@ func (s *Service) Save(ctx context.Context, p models.Person) error {
 		return err
 	}
 
-	return s.producer.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{
-			Topic:     &s.topic,
-			Partition: kafka.PartitionAny,
-		},
-		Value: mp,
-	}, nil)
+	return s.producer.Produce(mp)
 }
 
 func (s *Service) Get(ctx context.Context, id string) (*models.Person, error) {
@@ -196,8 +203,7 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	return s.cache.Del(ctx, id)
 }
 
-// Close flushes and closes the kafka producer
+// Close flushes and closes the producer
 func (s *Service) Close() {
-	s.producer.Flush(15 * 1000)
 	s.producer.Close()
 }

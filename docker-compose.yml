@@ -16,6 +16,7 @@ services:
     build:
       context: .
       dockerfile: ./build/api/Dockerfile
+    restart: always
     depends_on:
       - postgres
       - broker
@@ -39,6 +40,7 @@ services:
     build:
       context: .
       dockerfile: ./build/service/Dockerfile
+    restart: always
     depends_on:
       - broker
       - postgres

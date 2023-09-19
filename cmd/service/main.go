@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -14,6 +15,7 @@ import (
 	"github.com/romankravchuk/effective-mobile-test-task/internal/log"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/service/person"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/storage"
+	brokerkafka "github.com/romankravchuk/effective-mobile-test-task/internal/storage/broker/kafka"
 )
 
 func main() {
@@ -24,15 +26,15 @@ func main() {
 
 	log.Info("config loaded", slog.Any("cfg", cfg))
 
-	consumer, err := storage.NewKafkaConsumer(&cfg.KafkaMap, cfg.Topics)
+	kc, err := storage.NewKafkaConsumer(&cfg.KafkaMap, cfg.Topics)
 	failedOnError("failed to create kafka consumer", err)
 
-	producer, err := storage.NewKafkaProducer(&cfg.KafkaMap)
+	kp, err := storage.NewKafkaProducer(&cfg.KafkaMap)
 	failedOnError("failed to create kafka producer", err)
 
 	svc, err := person.New(
-		person.WithConsumer(consumer),
-		person.WithProducer(producer, cfg.Topic),
+		person.WithConsumer(brokerkafka.NewConsumer(kc)),
+		person.WithProducer((brokerkafka.NewProducer(kp, cfg.Topic)), cfg.Topic),
 		person.WithTimeout(cfg.Timeout),
 		person.WithPostgresPeopleStorage(cfg.DatabaseURL),
 	)
@@ -47,13 +49,13 @@ run:
 	for {
 		select {
 		case <-exitCh:
-			producer.Flush(5 * 1000)
-			producer.Close()
-			consumer.Close()
+			kp.Flush(5 * 1000)
+			kp.Close()
+			kc.Close()
 			log.Info("the service is stopped")
 			break run
 		default:
-			if res, err := svc.Save(); err != nil {
+			if res, err := svc.Save(context.Background()); err != nil {
 				switch err := err.(type) {
 				case kafka.Error:
 					if err.Code() == kafka.ErrTimedOut {

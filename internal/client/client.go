@@ -8,9 +8,9 @@ import (
 	"net/url"
 
 	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/apitools"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/errtools"
 )
 
+// TODO: wrap all fetch functions in structs that implement Fetcher interface
 const (
 	genderizeURL   = "https://api.genderize.io"
 	nationalizeURL = "https://api.nationalize.io"
@@ -45,20 +45,18 @@ type agifyResponse struct {
 
 // FetchAge returns the age of given name from Agify API.
 func FetchAge(name string) (int, error) {
-	const op = "client.FetchAge"
-
 	body, err := get(agifyURL, name)
 	if err != nil {
-		return 0, errtools.WithOperation(err, op)
+		return 0, err
 	}
 
 	var resp agifyResponse
 	if err = json.Unmarshal(body, &resp); err != nil {
-		return 0, errtools.WithOperation(err, op)
+		return 0, err
 	}
 
 	if resp.Age == 0 {
-		return 0, errtools.WithOperation(ErrFindAge, op)
+		return 0, ErrFindAge
 	}
 
 	return resp.Age, nil
@@ -70,20 +68,18 @@ type genderizeResponse struct {
 
 // FetchGender returns the gender of given name from Genderize API.
 func FetchGender(name string) (string, error) {
-	const op = "client.FetchGender"
-
 	body, err := get(genderizeURL, name)
 	if err != nil {
-		return "", errtools.WithOperation(err, op)
+		return "", err
 	}
 
 	var resp genderizeResponse
 	if err = json.Unmarshal(body, &resp); err != nil {
-		return "", errtools.WithOperation(err, op)
+		return "", err
 	}
 
 	if resp.Gender == "" {
-		return "", errtools.WithOperation(ErrFindGender, op)
+		return "", ErrFindGender
 	}
 
 	return resp.Gender, nil
@@ -100,20 +96,18 @@ type country struct {
 
 // FetchNationality returns the nationality of the given name from Nationalize API.
 func FetchNationality(name string) (string, error) {
-	const op = "client.FetchNationality"
-
 	body, err := get(nationalizeURL, name)
 	if err != nil {
-		return "", errtools.WithOperation(err, op)
+		return "", err
 	}
 
 	var resp nationalizeResponse
 	if err = json.Unmarshal(body, &resp); err != nil {
-		return "", errtools.WithOperation(err, op)
+		return "", err
 	}
 
 	if len(resp.Country) == 0 {
-		return "", errtools.WithOperation(ErrFindNationality, op)
+		return "", ErrFindNationality
 	}
 
 	return resp.Country[0].ID, nil

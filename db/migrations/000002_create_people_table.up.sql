@@ -6,8 +6,7 @@ CREATE TABLE IF NOT EXISTS people (
     age int,
     gender varchar(10),
     nationality varchar(2),
-    created_on timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_on timestamp,
+    is_deleted boolean DEFAULT false NOT NULL,
     CONSTRAINT people_pk PRIMARY KEY (id)
 );
 CREATE INDEX IF NOT EXISTS people_name_idx ON people (name ASC NULLS LAST);
