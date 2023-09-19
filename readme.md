@@ -99,3 +99,14 @@ make up && make seedkafka
 | `make gen` 	| Генерирует моки для интерфейсов, используя [mockery](https://github.com/vektra/mockery) 	|
 | `make seedkafka` 	| Создает топики **FIO** и **FIO_FAILED**  	|
 | `make tests` 	| Запускает unit-тесты 	|
+
+## Endpoints
+
+```http
+GET /person - список людей
+GET /person/{id} - конкретная персона
+DELETE /person/{id} - удалить конкретную персону
+PATCH /person/{id} - обновить конкретную персону
+POST /person - добавить новую персону
+POST /person/graphql - graphql запросы по персонам
+```
