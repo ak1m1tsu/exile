@@ -84,7 +84,11 @@ DATABASE_URL="postgres://postgres:postgrespwd@postgres:5432/emdb?sslmode=disable
 CACHE_URL="redis://default:redispwd@redis:6379/0"
 ```
 
-Доалее используя команду `make up` запустить докер контейнеры.
+Далее используем данную комбинацию команд, чтобы запустить контейнеры и создать топики в кафке
+
+```shell
+make up && make seedkafka
+```
 
 ## `Makefile` команды
 
@@ -93,5 +97,5 @@ CACHE_URL="redis://default:redispwd@redis:6379/0"
 | `make up` 	| Запускает скрипт `dockerup.sh`, который билдит все докер контейнеры. 	|
 | `make down` 	| Останавливает запущенные контейнеры 	|
 | `make gen` 	| Генерирует моки для интерфейсов, используя [mockery](https://github.com/vektra/mockery) 	|
-| `make kafkaseed` 	| Создает топики **FIO** и **FIO_FAILED**  	|
+| `make seedkafka` 	| Создает топики **FIO** и **FIO_FAILED**  	|
 | `make tests` 	| Запускает unit-тесты 	|
