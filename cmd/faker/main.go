@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/json"
 	"log/slog"
+	"math/rand"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/go-faker/faker/v4"
@@ -57,19 +59,12 @@ func main() {
 		go func() {
 			defer wg.Done()
 			key := uuid.New()
-			person := Person{
-				Name:    faker.FirstName(),
-				Surname: faker.LastName(),
-			}
+			var data []byte
 
-			marshaledPerson, err := json.Marshal(&person)
-			if err != nil {
-				slog.Error(
-					"failed to marshal person",
-					slog.Any("person", person),
-					slog.String("error", err.Error()),
-				)
-				return
+			if rand.New(rand.NewSource(time.Now().UnixNano())).Intn(2) == 0 {
+				data = generateBadMessage()
+			} else {
+				data = generateGoodMessage()
 			}
 
 			err = p.Produce(&kafka.Message{
@@ -78,7 +73,7 @@ func main() {
 					Partition: kafka.PartitionAny,
 				},
 				Key:   []byte(key.String()),
-				Value: marshaledPerson,
+				Value: data,
 			}, nil)
 			if err != nil {
 				slog.Error(
@@ -100,4 +95,25 @@ func failedOnError(err error, msg string) {
 		slog.Error(msg, slog.String("error", err.Error()))
 		os.Exit(1)
 	}
+}
+
+func generateGoodMessage() []byte {
+	person := Person{
+		Name:    faker.FirstName(),
+		Surname: faker.LastName(),
+	}
+
+	data, _ := json.Marshal(&person)
+	return data
+}
+
+func generateBadMessage() []byte {
+	person := Person{
+		Name:       faker.Email(),
+		Surname:    faker.IPv4(),
+		Patronymic: faker.URL(),
+	}
+
+	data, _ := json.Marshal(&person)
+	return data
 }

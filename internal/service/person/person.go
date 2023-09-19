@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log/slog"
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
@@ -18,7 +17,6 @@ import (
 )
 
 var (
-	ErrNilLogger         = errors.New("the logger could not be nil")
 	ErrNilConsumer       = errors.New("the kafka consumer could not be nil")
 	ErrNilProducer       = errors.New("the kafka producer could not be nil")
 	ErrNilPeopleStorage  = errors.New("the people storage could not be nil")
@@ -27,17 +25,6 @@ var (
 )
 
 type Option func(c *Service) error
-
-func WithLog(log *slog.Logger) Option {
-	return func(s *Service) error {
-		if log == nil {
-			return ErrNilLogger
-		}
-
-		s.log = log
-		return nil
-	}
-}
 
 func WithTimeout(timeout time.Duration) Option {
 	return func(s *Service) error {
@@ -57,12 +44,14 @@ func WithConsumer(consumer *kafka.Consumer) Option {
 	}
 }
 
-func WithProducer(producer *kafka.Producer) Option {
+func WithProducer(producer *kafka.Producer, topic string) Option {
 	return func(s *Service) error {
 		if producer == nil {
 			return ErrNilProducer
 		}
 
+		s.producer = producer
+		s.producerTopic = topic
 		return nil
 	}
 }
@@ -96,8 +85,6 @@ func WithPostgresPeopleStorage(url string) Option {
 }
 
 type Service struct {
-	log *slog.Logger
-
 	timeout time.Duration
 
 	consumer      *kafka.Consumer
@@ -144,7 +131,6 @@ func (s *Service) Save() ([]byte, error) {
 	})
 	errs.Go(func() error {
 		age, err := client.FetchAge(p.Name)
-		slog.Info("fetch_age", "age", age)
 		p.Age = age
 		return err
 	})
@@ -170,8 +156,13 @@ func (s *Service) Save() ([]byte, error) {
 }
 
 func (s *Service) SendErrMessage(data []byte, err string) error {
+	meta := make(map[string]any)
+	if err := json.Unmarshal(data, &meta); err != nil {
+		return err
+	}
+
 	errMsg, _ := json.Marshal(&models.ErrorMessage{
-		Meta:  data,
+		Meta:  meta,
 		Error: err,
 	})
 

@@ -35,8 +35,8 @@ func LoadServiceConfig() (*ServiceConfig, error) {
 	}
 
 	cfg.KafkaMap["group.id"] = cfg.GroupID
-	cfg.KafkaMap["bootstrap.servers"] = cfg.BootstrapServers
 	cfg.KafkaMap["auto.offset.reset"] = cfg.AutoOffsetReset
+	cfg.KafkaMap["bootstrap.servers"] = cfg.BootstrapServers
 
 	return &cfg, nil
 }

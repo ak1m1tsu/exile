@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -8,7 +9,6 @@ import (
 	"syscall"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/client"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/config"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/sl"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/log"
@@ -31,9 +31,8 @@ func main() {
 	failedOnError("failed to create kafka producer", err)
 
 	svc, err := person.New(
-		person.WithLog(log),
 		person.WithConsumer(consumer),
-		person.WithProducer(producer),
+		person.WithProducer(producer, cfg.Topic),
 		person.WithTimeout(cfg.Timeout),
 		person.WithPostgresPeopleStorage(cfg.DatabaseURL),
 	)
@@ -62,13 +61,12 @@ run:
 					}
 					log.Error("failed to read message", sl.Err(err))
 				default:
-					switch err {
-					case person.ErrMessageFromat, person.ErrMessageValidation,
-						client.ErrFindAge, client.ErrFindGender, client.ErrFindNationality:
+					if errors.Is(err, person.ErrMessageFromat) || errors.Is(err, person.ErrMessageValidation) {
 						if err := svc.SendErrMessage(res, err.Error()); err != nil {
 							log.Error("failed to send error message", sl.Err(err))
 						}
-					default:
+						log.Info("the invalid message was send", slog.Any("message", res), sl.Err(err))
+					} else {
 						log.Error("failed to save person", sl.Err(err))
 					}
 				}

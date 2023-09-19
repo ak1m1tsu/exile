@@ -1,6 +1,6 @@
 package models
 
 type ErrorMessage struct {
-	Meta  []byte `json:"meta"`
-	Error string `json:"error"`
+	Meta  map[string]any `json:"meta"`
+	Error string         `json:"error"`
 }

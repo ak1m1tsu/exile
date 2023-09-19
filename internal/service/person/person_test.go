@@ -1,7 +1,6 @@
 package person
 
 import (
-	"log/slog"
 	"reflect"
 	"testing"
 
@@ -19,11 +18,6 @@ func TestNew(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "with nil logger",
-			args:    args{options: []Option{WithLog(nil)}},
-			wantErr: true,
-		},
-		{
 			name:    "with nil people storage",
 			args:    args{options: []Option{WithPeopleStorage(nil)}},
 			wantErr: true,
@@ -35,13 +29,8 @@ func TestNew(t *testing.T) {
 		},
 		{
 			name:    "with nil producer",
-			args:    args{options: []Option{WithProducer(nil)}},
+			args:    args{options: []Option{WithProducer(nil, "")}},
 			wantErr: true,
-		},
-		{
-			name:    "with not nil logger",
-			args:    args{options: []Option{WithLog(&slog.Logger{})}},
-			wantErr: false,
 		},
 		{
 			name:    "with not nil people storage",
@@ -55,7 +44,7 @@ func TestNew(t *testing.T) {
 		},
 		{
 			name:    "with not nil producer",
-			args:    args{options: []Option{WithProducer(&kafka.Producer{})}},
+			args:    args{options: []Option{WithProducer(&kafka.Producer{}, "")}},
 			wantErr: false,
 		},
 	}
