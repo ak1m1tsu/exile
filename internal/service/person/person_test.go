@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	clientmocks "github.com/romankravchuk/effective-mobile-test-task/internal/client/mocks"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/models"
 	brokermocks "github.com/romankravchuk/effective-mobile-test-task/internal/storage/broker/mocks"
 	storagemocks "github.com/romankravchuk/effective-mobile-test-task/internal/storage/person/mocks"
@@ -71,37 +72,45 @@ func TestNew(t *testing.T) {
 
 func TestService_Save(t *testing.T) {
 	consumer := brokermocks.NewConsumer(t)
-	producer := brokermocks.NewProducer(t)
 	storage := storagemocks.NewStorage(t)
+	agify := clientmocks.NewFetcher(t)
+	genderize := clientmocks.NewFetcher(t)
+	nationalize := clientmocks.NewFetcher(t)
 	timeout := time.Second
 
 	svc, err := New(
 		WithConsumer(consumer),
-		WithProducer(producer, ""),
 		WithPeopleStorage(storage),
 		WithTimeout(timeout),
+		WithNationalizeClient(nationalize),
+		WithAgifyClient(agify),
+		WithGenderizeClient(genderize),
 	)
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
 
-	testPerson := models.Person{
-		Name:    "Roman",
-		Surname: "Kravchuk",
+	tp := models.Person{
+		Name:        "Roman",
+		Surname:     "Kravchuk",
+		Age:         25,
+		Gender:      "male",
+		Nationality: "US",
 	}
 
-	data, _ := json.Marshal(&testPerson)
+	data, _ := json.Marshal(&tp)
+
 	consumer.On("Consume", timeout).
 		Once().
 		Return(data, nil)
+	agify.On("Fetch", tp.Name).Once().Return([]byte(`{"age":25}`), nil)
+	genderize.On("Fetch", tp.Name).Once().Return([]byte(`{"gender":"male"}`), nil)
+	nationalize.On("Fetch", tp.Name).Once().Return([]byte(`{"nationality":"US"}`), nil)
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	testPerson.Age = 55
-	testPerson.Gender = "male"
-	testPerson.Nationality = "CZ"
-	storage.On("Create", ctx, &testPerson).
+	storage.On("Create", ctx, &tp).
 		Once().
 		Return(nil)
 
