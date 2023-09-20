@@ -10,12 +10,10 @@ import (
 	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/apitools"
 )
 
-// TODO: wrap all fetch functions in structs that implement Fetcher interface
-const (
-	genderizeURL   = "https://api.genderize.io"
-	nationalizeURL = "https://api.nationalize.io"
-	agifyURL       = "https://api.agify.io"
-)
+//go:generate go run github.com/vektra/mockery/v2@v2.20.2 --name Fetcher --output ./mocks --outpkg mocks
+type Fetcher interface {
+	Fetch(name string) ([]byte, error)
+}
 
 var (
 	ErrNameEmpty       = errors.New("the name param is empty")
@@ -37,80 +35,6 @@ type APIError struct {
 // Error returns the error message from the APIError.
 func (e APIError) Error() string {
 	return e.Message
-}
-
-type agifyResponse struct {
-	Age int `json:"age"`
-}
-
-// FetchAge returns the age of given name from Agify API.
-func FetchAge(name string) (int, error) {
-	body, err := get(agifyURL, name)
-	if err != nil {
-		return 0, err
-	}
-
-	var resp agifyResponse
-	if err = json.Unmarshal(body, &resp); err != nil {
-		return 0, err
-	}
-
-	if resp.Age == 0 {
-		return 0, ErrFindAge
-	}
-
-	return resp.Age, nil
-}
-
-type genderizeResponse struct {
-	Gender string `json:"gender"`
-}
-
-// FetchGender returns the gender of given name from Genderize API.
-func FetchGender(name string) (string, error) {
-	body, err := get(genderizeURL, name)
-	if err != nil {
-		return "", err
-	}
-
-	var resp genderizeResponse
-	if err = json.Unmarshal(body, &resp); err != nil {
-		return "", err
-	}
-
-	if resp.Gender == "" {
-		return "", ErrFindGender
-	}
-
-	return resp.Gender, nil
-}
-
-type nationalizeResponse struct {
-	Country []country `json:"country"`
-}
-
-type country struct {
-	ID          string  `json:"country_id"`
-	Probability float64 `json:"probability"`
-}
-
-// FetchNationality returns the nationality of the given name from Nationalize API.
-func FetchNationality(name string) (string, error) {
-	body, err := get(nationalizeURL, name)
-	if err != nil {
-		return "", err
-	}
-
-	var resp nationalizeResponse
-	if err = json.Unmarshal(body, &resp); err != nil {
-		return "", err
-	}
-
-	if len(resp.Country) == 0 {
-		return "", ErrFindNationality
-	}
-
-	return resp.Country[0].ID, nil
 }
 
 func get(apiURL string, name string) ([]byte, error) {
