@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/romankravchuk/effective-mobile-test-task/internal/client"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/config"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/sl"
 	"github.com/romankravchuk/effective-mobile-test-task/internal/log"
@@ -37,7 +38,11 @@ func main() {
 		person.WithProducer((brokerkafka.NewProducer(kp, cfg.Topic)), cfg.Topic),
 		person.WithTimeout(cfg.Timeout),
 		person.WithPostgresPeopleStorage(cfg.DatabaseURL),
+		person.WithAgifyClient(client.NewAgeFetcher()),
+		person.WithGenderizeClient(client.NewGenderFetcher()),
+		person.WithNationalizeClient(client.NewNationalityFetcher()),
 	)
+
 	failedOnError("failed to create service", err)
 
 	log.Info("the service is running")

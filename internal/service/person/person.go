@@ -20,6 +20,7 @@ import (
 var (
 	ErrMessageFromat     = errors.New("the message have invalid format")
 	ErrMessageValidation = errors.New("the message is invalid")
+	ErrNilClientFetcher  = errors.New("the client fetcher is nil")
 )
 
 type Option func(c *Service) error
@@ -82,12 +83,49 @@ func WithPostgresPeopleStorage(url string) Option {
 	}
 }
 
+func WithAgifyClient(fetcher client.Fetcher) Option {
+	return func(s *Service) error {
+		if fetcher == nil {
+			return ErrNilClientFetcher
+		}
+
+		s.agify = fetcher
+		return nil
+	}
+}
+
+func WithGenderizeClient(fetcher client.Fetcher) Option {
+	return func(s *Service) error {
+		if fetcher == nil {
+			return ErrNilClientFetcher
+		}
+
+		s.genderize = fetcher
+		return nil
+	}
+}
+
+func WithNationalizeClient(fetcher client.Fetcher) Option {
+	return func(s *Service) error {
+		if fetcher == nil {
+			return ErrNilClientFetcher
+		}
+
+		s.nationalize = fetcher
+		return nil
+	}
+}
+
 type Service struct {
 	timeout time.Duration
 
 	consumer      broker.Consumer
 	producer      broker.Producer
 	producerTopic string
+
+	agify       client.Fetcher
+	genderize   client.Fetcher
+	nationalize client.Fetcher
 
 	people person.Storage
 }
@@ -124,17 +162,28 @@ func (s *Service) Save(ctx context.Context) ([]byte, error) {
 
 	errs, _ := errgroup.WithContext(clientsCtx)
 	errs.Go(func() error {
-		p.Nationality, err = client.FetchNationality(p.Name)
-		return err
+		data, err := s.nationalize.Fetch(p.Name)
+		if err != nil {
+			return err
+		}
+
+		return json.Unmarshal(data, &p)
 	})
 	errs.Go(func() error {
-		age, err := client.FetchAge(p.Name)
-		p.Age = age
-		return err
+		data, err := s.agify.Fetch(p.Name)
+		if err != nil {
+			return err
+		}
+
+		return json.Unmarshal(data, &p)
 	})
 	errs.Go(func() error {
-		p.Gender, err = client.FetchGender(p.Name)
-		return err
+		data, err := s.genderize.Fetch(p.Name)
+		if err != nil {
+			return err
+		}
+
+		return json.Unmarshal(data, &p)
 	})
 
 	if err := errs.Wait(); err != nil {
