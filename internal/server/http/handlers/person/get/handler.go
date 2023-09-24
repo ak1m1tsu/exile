@@ -23,7 +23,7 @@ type PersonGetter interface {
 func New(log *slog.Logger, getter PersonGetter) func(http.ResponseWriter, *http.Request) {
 	type resp struct {
 		response.Response
-		models.Person `json:"person,omitempty"`
+		*models.Person `json:"person,omitempty"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
@@ -60,7 +60,7 @@ func New(log *slog.Logger, getter PersonGetter) func(http.ResponseWriter, *http.
 
 		render.JSON(w, r, resp{
 			Response: response.OK(),
-			Person:   *p,
+			Person:   p,
 		})
 	}
 }
