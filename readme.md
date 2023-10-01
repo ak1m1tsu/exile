@@ -1,44 +1,150 @@
-# Effective Mobile test task
+# Exile
 
-## Суть задания
+## Technologies
 
-Реализовать сервис, который будет получать поток ФИО, из открытых апи обогащать
-ответ наиболее вероятными возрастом, полом и национальностью и сохранять данные в
-БД. По запросу выдавать инфу о найденных людях. Необходимо реализовать следующее:
+- Redis (cache)
+- PostgreSQL (database)
+- Apache Kafka (communication between services)
+- GraphQL (API gateway endpoints)
+- Docker (deploy services, database, etc.)
+- External APIs
+    - https://api.agify.io
+    - https://api.genderize.io
+    - https://api.nationalize.io
 
-1. Сервис слушает очередь кафки **FIO**, в котором приходит информация с ФИО в
-формате:
+## Design diagram
+
+![](./assets/exile-system-design.svg)
+
+## Services
+
+### Person service
+
+A service that receives a stream of full name, enriches the response with the most probable age, gender and nationality using open APIs and stores the data in the database.
+
+### API Gateway
+
+### Get list of persons
+
+```shell
+curl http://localhost:5555/person
+```
+
+**Response**
 
 ```json
 {
-    "name": "Dmitriy",
-    "surname": "Ushakov",
-    "patronymic": "Vasilevich" // необязательно
+  "status": "OK",
+  "people": [
+    {
+      "ID": "05dd6483-1938-4d8b-9a45-7f61a69ad377",
+      "Name": "Ivan",
+      "Surname": "Ivanov",
+      "Patronymic": "",
+      "Age": 54,
+      "Gender": "male",
+      "Nationality": "HR",
+      "IsDeleted": false
+    }
+  ]
 }
 ```
-2. В случае некорректного сообщения, обогатить его причиной ошибки (нет
-обязательного поля, некорректный формат...) и отправить в очередь кафки
-**FIO_FAILED**
-3. Корректное сообщение обогатить:
-    - Возрастом - https://api.agify.io/?name=Dmitriy
-    - Полом - https://api.genderize.io/?name=Dmitriy
-    - Национальностью - https://api.nationalize.io/?name=Dmitriy
-4. Обогащенное сообщение положить в БД postgres (структура БД должна быть создана
-путем миграций)
-5. Выставить REST методы:
-    - Для получения данных с различными фильтрами и пагинацией
-    - Для добавления новых людей
-    - Для удаления по идентификатору
-    - Для изменения сущности
-6. Выставить GraphQL методы аналогичные REST
-7. Предусмотреть кэширование данных в redis
-8. Покрыть код логами
-9. Покрыть бизнес-логику unit-тестами
-10. Вынести все конфигурационные данные в .env
 
-## Как запустить
+### Get person
 
-Создать конфигурационный файл `.env` и заполнить его следующим содержимым:
+```shell
+curl http://localhost:5555/person/<id>
+```
+
+**Response**
+
+```json
+{
+  "status": "OK",
+  "person": {
+    "ID": "05dd6483-1938-4d8b-9a45-7f61a69ad377",
+    "Name": "Ivan",
+    "Surname": "Ivanov",
+    "Patronymic": "",
+    "Age": 54,
+    "Gender": "male",
+    "Nationality": "HR",
+    "IsDeleted": false
+  }
+}
+```
+
+### Create new person
+
+```shell
+curl -X POST --data '{"name":"Ivan", "surname":"Ivanov", "patronymic":"Ivanovich"}' http://localhost:5555/person
+```
+
+**Response**
+
+```json
+{
+    "status": "OK",
+    "person": {
+        "ID": "05dd6483-1938-4d8b-9a45-7f61a69ad377",
+        "Name": "Ivan",
+        "Surname": "Ivanov",
+        "Patronymic": "Ivanovich",
+        "Age": 54,
+        "Gender": "male",
+        "Nationality": "HR",
+        "IsDeleted": false
+    }
+}
+```
+
+### Update a person
+
+```shell
+curl -X PATCH --data '{"name":"Roman","surname":"Kravchuk","age":21}' http://localhost:5555/person/<id>
+```
+
+**Response**
+
+```json
+{
+  "status": "OK",
+  "person": {
+    "ID": "05dd6483-1938-4d8b-9a45-7f61a69ad377",
+    "Name": "Roman",
+    "Surname": "Kravchuk",
+    "Patronymic": "Ivanovich",
+    "Age": 21,
+    "Gender": "male",
+    "Nationality": "HR",
+    "IsDeleted": false
+  }
+}
+```
+
+### Delete a person
+
+```shell
+curl -X DELETE http://localhost:5555/person/<id>
+```
+
+**Response**
+
+```json
+{
+    "status": "OK"
+}
+```
+
+### GraphQL endpoints
+
+```shell
+curl -X POST http://localhost:5555/person/graphql
+```
+
+## How to run?
+
+Create config file `.env`:
 
 ```shell
 # Postgres configuration
@@ -84,13 +190,13 @@ DATABASE_URL="postgres://postgres:postgrespwd@postgres:5432/emdb?sslmode=disable
 CACHE_URL="redis://default:redispwd@redis:6379/0"
 ```
 
-Далее используем данную комбинацию команд, чтобы запустить контейнеры и создать топики в кафке
+Next, use this commands to start containers and create Kafka topics
 
 ```shell
 make up && make seedkafka
 ```
 
-## `Makefile` команды
+## `Makefile` commands
 
 | Команда 	| Описание 	|
 |---	|---	|
@@ -99,14 +205,3 @@ make up && make seedkafka
 | `make gen` 	| Генерирует моки для интерфейсов, используя [mockery](https://github.com/vektra/mockery) 	|
 | `make seedkafka` 	| Создает топики **FIO** и **FIO_FAILED**  	|
 | `make tests` 	| Запускает unit-тесты 	|
-
-## Endpoints
-
-```http
-GET /person - список людей
-GET /person/{id} - конкретная персона
-DELETE /person/{id} - удалить конкретную персону
-PATCH /person/{id} - обновить конкретную персону
-POST /person - добавить новую персону
-POST /person/graphql - graphql запросы по персонам
-```
