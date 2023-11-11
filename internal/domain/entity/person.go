@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"fmt"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/go-playground/validator/v10"
 )
@@ -16,19 +18,15 @@ type Person struct {
 }
 
 func (p Person) ToModel() PersonModel {
-	return PersonModel{
-		ID:          p.ID,
-		Name:        p.Name,
-		Surname:     p.Surname,
-		Patronymic:  p.Patronymic,
-		Gender:      p.Gender,
-		Nationality: p.Nationality,
-		Age:         p.Age,
-	}
+	return PersonModel(p)
 }
 
 func (p Person) Validate() error {
-	return validator.New().Struct(p)
+	if err := validator.New().Struct(p); err != nil {
+		return fmt.Errorf("validation error: %w", err)
+	}
+
+	return nil
 }
 
 type PersonModel struct {
@@ -41,27 +39,19 @@ type PersonModel struct {
 	Age         int
 }
 
-func (m PersonModel) ToEntity() Person {
-	return Person{
-		ID:          m.ID,
-		Name:        m.Name,
-		Surname:     m.Surname,
-		Patronymic:  m.Patronymic,
-		Gender:      m.Gender,
-		Nationality: m.Nationality,
-		Age:         m.Age,
-	}
+func (pm PersonModel) ToEntity() Person {
+	return Person(pm)
 }
 
 // InsertQuery returns insertBuilder with sql query:
 //
 //	INSERT INTO table (name, surname, patronymic, age, gender, nationality)
 //	VALUES (?, ?, ?, ?, ?, ?)
-func (p PersonModel) InsertQuery(table string) sq.InsertBuilder {
+func (pm PersonModel) InsertQuery(table string) sq.InsertBuilder {
 	builder := sq.StatementBuilder.
 		Insert(table).
 		Columns("name", "surname", "patronymic", "age", "gender", "nationality").
-		Values(p.Name, p.Surname, p.Patronymic, p.Age, p.Gender, p.Nationality)
+		Values(pm.Name, pm.Surname, pm.Patronymic, pm.Age, pm.Gender, pm.Nationality)
 
 	return builder
 }
@@ -72,7 +62,7 @@ func (p PersonModel) InsertQuery(table string) sq.InsertBuilder {
 //		name, surname, patronymic, age, gender, nationality
 //	FROM table
 //	WHERE id = ?
-func (p PersonModel) FindOneQuery(table string, id string) sq.SelectBuilder {
+func (pm PersonModel) FindOneQuery(table string, id string) sq.SelectBuilder {
 	builder := sq.StatementBuilder.
 		Select("name", "surname", "patronymic", "age", "gender", "nationality").
 		From(table).
@@ -95,33 +85,33 @@ func (p PersonModel) FindOneQuery(table string, id string) sq.SelectBuilder {
 //			AND gender = ?
 //			AND nationality = ?
 //	 LIMIT ? OFFSET ?
-func (p PersonModel) FindManyQuery(table string, limit, offset int) sq.SelectBuilder {
+func (pm PersonModel) FindManyQuery(table string, limit, offset int) sq.SelectBuilder {
 	builder := sq.StatementBuilder.
 		Select("id", "name", "surname", "patronymic", "age", "gender", "nationality").
 		From(table)
 
-	if p.Name != "" {
-		builder = builder.Where(sq.Like{"name": p.Name})
+	if pm.Name != "" {
+		builder = builder.Where(sq.Like{"name": pm.Name})
 	}
 
-	if p.Surname != "" {
-		builder = builder.Where(sq.Like{"surname": p.Surname})
+	if pm.Surname != "" {
+		builder = builder.Where(sq.Like{"surname": pm.Surname})
 	}
 
-	if p.Patronymic != "" {
-		builder = builder.Where(sq.Like{"patronymic": p.Patronymic})
+	if pm.Patronymic != "" {
+		builder = builder.Where(sq.Like{"patronymic": pm.Patronymic})
 	}
 
-	if p.Age != 0 {
-		builder = builder.Where(sq.Eq{"age": p.Age})
+	if pm.Age != 0 {
+		builder = builder.Where(sq.Eq{"age": pm.Age})
 	}
 
-	if p.Gender != "" {
-		builder = builder.Where(sq.Eq{"gender": p.Gender})
+	if pm.Gender != "" {
+		builder = builder.Where(sq.Eq{"gender": pm.Gender})
 	}
 
-	if p.Nationality != "" {
-		builder = builder.Where(sq.Eq{"nationality": p.Nationality})
+	if pm.Nationality != "" {
+		builder = builder.Where(sq.Eq{"nationality": pm.Nationality})
 	}
 
 	return builder.Limit(uint64(limit)).Offset(uint64(offset))
@@ -137,16 +127,16 @@ func (p PersonModel) FindManyQuery(table string, limit, offset int) sq.SelectBui
 //	    gender = ?,
 //	    nationality = ?
 //	WHERE id = ?
-func (p PersonModel) UpdateQuery(table string) sq.UpdateBuilder {
+func (pm PersonModel) UpdateQuery(table string) sq.UpdateBuilder {
 	builder := sq.StatementBuilder.
 		Update(table).
-		Set("name", p.Name).
-		Set("surname", p.Surname).
-		Set("patronymic", p.Patronymic).
-		Set("age", p.Age).
-		Set("gender", p.Gender).
-		Set("nationality", p.Nationality).
-		Where(sq.Eq{"id": p.ID})
+		Set("name", pm.Name).
+		Set("surname", pm.Surname).
+		Set("patronymic", pm.Patronymic).
+		Set("age", pm.Age).
+		Set("gender", pm.Gender).
+		Set("nationality", pm.Nationality).
+		Where(sq.Eq{"id": pm.ID})
 
 	return builder
 }
@@ -155,7 +145,7 @@ func (p PersonModel) UpdateQuery(table string) sq.UpdateBuilder {
 //
 //	DELETE FROM table
 //	WHERE id = ?
-func (p PersonModel) DeleteQuery(table string, id string) sq.DeleteBuilder {
+func (pm PersonModel) DeleteQuery(table string, id string) sq.DeleteBuilder {
 	builder := sq.StatementBuilder.
 		Delete(table).
 		Where(sq.Eq{"id": id})

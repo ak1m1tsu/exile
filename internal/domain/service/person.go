@@ -5,14 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/insan1a/exile/internal/domain/entity"
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/sync/errgroup"
 )
 
 var (
-	ErrPersonNotFound = errors.New("the person not found")
-	ErrPersonInvalid  = errors.New("the person is invalid")
+	ErrPersonNotFound = errors.New("the redis not found")
+	ErrPersonInvalid  = errors.New("the redis is invalid")
 )
 
 //go:generate go run github.com/vektra/mockery/v2@v2.20.2 --name PersonRepository
@@ -24,6 +25,14 @@ type PersonRepository interface {
 	Delete(context.Context, string) error
 }
 
+//go:generate go run github.com/vektra/mockery/v2@v2.20.2 --name PersonCache
+type PersonCache interface {
+	Get(ctx context.Context, key string) ([]byte, bool, error)
+	Set(ctx context.Context, key string, value []byte) error
+	Delete(ctx context.Context, key string) error
+	GetAndSet(ctx context.Context, key string, value []byte) ([]byte, error)
+}
+
 //go:generate go run github.com/vektra/mockery/v2@v2.20.2 --name Fetcher
 type Fetcher interface {
 	Fetch(ctx context.Context, name string) ([]byte, error)
@@ -31,6 +40,7 @@ type Fetcher interface {
 
 type PersonService struct {
 	repo               PersonRepository
+	cache              PersonCache
 	ageFetcher         Fetcher
 	genderFetcher      Fetcher
 	nationalityFetcher Fetcher
@@ -38,12 +48,14 @@ type PersonService struct {
 
 func NewPersonService(
 	repo PersonRepository,
+	cache PersonCache,
 	ageFetcher Fetcher,
 	genderFetcher Fetcher,
 	nationalityFetcher Fetcher,
 ) *PersonService {
 	return &PersonService{
 		repo:               repo,
+		cache:              cache,
 		ageFetcher:         ageFetcher,
 		genderFetcher:      genderFetcher,
 		nationalityFetcher: nationalityFetcher,
@@ -56,11 +68,11 @@ func (s *PersonService) Store(ctx context.Context, person entity.Person) (entity
 	g.Go(func() error {
 		data, err := s.ageFetcher.Fetch(gCtx, person.Name)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to fetch age: %w", err)
 		}
 
 		if err = json.Unmarshal(data, &person); err != nil {
-			return err
+			return fmt.Errorf("failed to unmarshal age: %w", err)
 		}
 
 		return nil
@@ -69,11 +81,11 @@ func (s *PersonService) Store(ctx context.Context, person entity.Person) (entity
 	g.Go(func() error {
 		data, err := s.genderFetcher.Fetch(gCtx, person.Name)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to fetch gender: %w", err)
 		}
 
 		if err = json.Unmarshal(data, &person); err != nil {
-			return err
+			return fmt.Errorf("failed to unmarshal gender: %w", err)
 		}
 
 		return nil
@@ -82,18 +94,18 @@ func (s *PersonService) Store(ctx context.Context, person entity.Person) (entity
 	g.Go(func() error {
 		data, err := s.nationalityFetcher.Fetch(gCtx, person.Name)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to fetch nationality: %w", err)
 		}
 
 		if err = json.Unmarshal(data, &person); err != nil {
-			return err
+			return fmt.Errorf("failed to unmarshal nationality: %w", err)
 		}
 
 		return nil
 	})
 
 	if err := g.Wait(); err != nil {
-		return entity.Person{}, fmt.Errorf("failed to fetch person: %w", err)
+		return entity.Person{}, fmt.Errorf("failed to fetch redis: %w", err)
 	}
 
 	if err := person.Validate(); err != nil {
@@ -102,7 +114,7 @@ func (s *PersonService) Store(ctx context.Context, person entity.Person) (entity
 
 	model, err := s.repo.Store(ctx, person.ToModel())
 	if err != nil {
-		return entity.Person{}, fmt.Errorf("failed to store person: %w", err)
+		return entity.Person{}, fmt.Errorf("failed to store redis: %w", err)
 	}
 
 	return model.ToEntity(), nil
@@ -115,7 +127,7 @@ func (s *PersonService) FindByID(ctx context.Context, id string) (entity.Person,
 		case errors.Is(err, pgx.ErrNoRows):
 			return entity.Person{}, errors.Join(err, ErrPersonNotFound)
 		default:
-			return entity.Person{}, fmt.Errorf("failed to find person by id: %w", err)
+			return entity.Person{}, fmt.Errorf("failed to find redis by id: %w", err)
 		}
 	}
 
@@ -147,7 +159,7 @@ func (s *PersonService) Update(ctx context.Context, person entity.Person) (entit
 		case errors.Is(err, pgx.ErrNoRows):
 			return entity.Person{}, errors.Join(err, ErrPersonNotFound)
 		default:
-			return entity.Person{}, fmt.Errorf("failed to update person: %w", err)
+			return entity.Person{}, fmt.Errorf("failed to update redis: %w", err)
 		}
 	}
 
@@ -160,7 +172,7 @@ func (s *PersonService) Delete(ctx context.Context, id string) error {
 		case errors.Is(err, pgx.ErrNoRows):
 			return errors.Join(err, ErrPersonNotFound)
 		default:
-			return fmt.Errorf("failed to delete person: %w", err)
+			return fmt.Errorf("failed to delete redis: %w", err)
 		}
 	}
 
