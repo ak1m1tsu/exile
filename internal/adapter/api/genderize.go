@@ -31,5 +31,10 @@ func (gf *GenderFetcher) Fetch(ctx context.Context, name string) ([]byte, error)
 		return nil, fmt.Errorf("error decoding gender: %w", err)
 	}
 
-	return json.Marshal(resp)
+	data, err = json.Marshal(resp)
+	if err != nil {
+		return nil, fmt.Errorf("error encoding gender: %w", err)
+	}
+
+	return data, nil
 }

@@ -20,7 +20,7 @@ var (
 type PersonRepository interface {
 	Store(context.Context, entity.PersonModel) (entity.PersonModel, error)
 	FindByID(context.Context, string) (entity.PersonModel, error)
-	FindMany(context.Context, int, int, entity.PersonModel) ([]entity.PersonModel, error)
+	FindMany(context.Context, uint64, uint64, entity.PersonModel) ([]entity.PersonModel, error)
 	Update(context.Context, entity.PersonModel) (entity.PersonModel, error)
 	Delete(context.Context, string) error
 }
@@ -134,7 +134,7 @@ func (s *PersonService) FindByID(ctx context.Context, id string) (entity.Person,
 	return model.ToEntity(), nil
 }
 
-func (s *PersonService) FindMany(ctx context.Context, page, limit int, filter entity.Person) ([]entity.Person, error) {
+func (s *PersonService) FindMany(ctx context.Context, page, limit uint64, filter entity.Person) ([]entity.Person, error) {
 	models, err := s.repo.FindMany(ctx, page, limit, filter.ToModel())
 	if err != nil {
 		return nil, fmt.Errorf("failed to find many persons: %w", err)

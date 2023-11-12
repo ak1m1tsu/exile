@@ -36,5 +36,10 @@ func (nf *NationalityFetcher) Fetch(ctx context.Context, name string) ([]byte, e
 		return nil, fmt.Errorf("error unmarshalling nationality: %w", err)
 	}
 
-	return json.Marshal(resp)
+	data, err = json.Marshal(resp)
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling nationality: %w", err)
+	}
+
+	return data, nil
 }

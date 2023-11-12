@@ -1,4 +1,4 @@
-package postgres
+package pg
 
 import (
 	"context"
@@ -21,7 +21,7 @@ func NewPersonRepository(db *postgres.Postgres) *PersonRepository {
 	}
 }
 
-// Store persists person to the database.
+// Store persists redis to the database.
 func (r *PersonRepository) Store(ctx context.Context, person entity.PersonModel) (entity.PersonModel, error) {
 	sql, args, err := person.
 		InsertQuery(r.table).
@@ -36,13 +36,13 @@ func (r *PersonRepository) Store(ctx context.Context, person entity.PersonModel)
 		QueryRow(ctx, sql, args...).
 		Scan(&person.ID)
 	if err != nil {
-		return entity.PersonModel{}, fmt.Errorf("failed to scan person: %w", err)
+		return entity.PersonModel{}, fmt.Errorf("failed to scan redis: %w", err)
 	}
 
 	return person, nil
 }
 
-// FindByID finds person by ID.
+// FindByID finds redis by ID.
 func (r *PersonRepository) FindByID(ctx context.Context, id string) (entity.PersonModel, error) {
 	var person entity.PersonModel
 
@@ -65,14 +65,14 @@ func (r *PersonRepository) FindByID(ctx context.Context, id string) (entity.Pers
 			&person.Nationality,
 		)
 	if err != nil {
-		return entity.PersonModel{}, fmt.Errorf("failed to scan person: %w", err)
+		return entity.PersonModel{}, fmt.Errorf("failed to scan redis: %w", err)
 	}
 
 	return person, nil
 }
 
 // FindMany finds many persons.
-func (r *PersonRepository) FindMany(ctx context.Context, limit, offset int, filter entity.PersonModel) ([]entity.PersonModel, error) {
+func (r *PersonRepository) FindMany(ctx context.Context, limit, offset uint64, filter entity.PersonModel) ([]entity.PersonModel, error) {
 	sql, args, err := filter.
 		FindManyQuery(r.table, limit, offset).
 		PlaceholderFormat(sq.Dollar).
@@ -115,7 +115,7 @@ func (r *PersonRepository) FindMany(ctx context.Context, limit, offset int, filt
 	return persons, nil
 }
 
-// Update updates person.
+// Update updates redis.
 func (r *PersonRepository) Update(ctx context.Context, person entity.PersonModel) (entity.PersonModel, error) {
 	sql, args, err := person.
 		UpdateQuery(r.table).
@@ -127,13 +127,13 @@ func (r *PersonRepository) Update(ctx context.Context, person entity.PersonModel
 
 	_, err = r.db.Pool.Exec(ctx, sql, args...)
 	if err != nil {
-		return entity.PersonModel{}, fmt.Errorf("failed to update person: %w", err)
+		return entity.PersonModel{}, fmt.Errorf("failed to update redis: %w", err)
 	}
 
 	return person, nil
 }
 
-// Delete deletes person.
+// Delete deletes redis.
 func (r *PersonRepository) Delete(ctx context.Context, id string) error {
 	var person entity.PersonModel
 
@@ -147,7 +147,7 @@ func (r *PersonRepository) Delete(ctx context.Context, id string) error {
 
 	_, err = r.db.Pool.Exec(ctx, sql, args...)
 	if err != nil {
-		return fmt.Errorf("failed to delete person: %w", err)
+		return fmt.Errorf("failed to delete redis: %w", err)
 	}
 
 	return nil

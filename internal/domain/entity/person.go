@@ -85,7 +85,7 @@ func (pm PersonModel) FindOneQuery(table string, id string) sq.SelectBuilder {
 //			AND gender = ?
 //			AND nationality = ?
 //	 LIMIT ? OFFSET ?
-func (pm PersonModel) FindManyQuery(table string, limit, offset int) sq.SelectBuilder {
+func (pm PersonModel) FindManyQuery(table string, limit, offset uint64) sq.SelectBuilder {
 	builder := sq.StatementBuilder.
 		Select("id", "name", "surname", "patronymic", "age", "gender", "nationality").
 		From(table)
@@ -114,7 +114,7 @@ func (pm PersonModel) FindManyQuery(table string, limit, offset int) sq.SelectBu
 		builder = builder.Where(sq.Eq{"nationality": pm.Nationality})
 	}
 
-	return builder.Limit(uint64(limit)).Offset(uint64(offset))
+	return builder.Limit(limit).Offset(offset)
 }
 
 // UpdateQuery returns updateBuilder with sql query:

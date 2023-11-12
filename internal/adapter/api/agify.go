@@ -31,5 +31,10 @@ func (a AgeFetcher) Fetch(ctx context.Context, name string) ([]byte, error) {
 		return nil, fmt.Errorf("error unmarshalling age response: %w", err)
 	}
 
-	return json.Marshal(resp)
+	data, err = json.Marshal(resp)
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling age response: %w", err)
+	}
+
+	return data, nil
 }

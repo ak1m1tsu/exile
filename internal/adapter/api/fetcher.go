@@ -32,12 +32,7 @@ func get(ctx context.Context, endpoint, name string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	client := http.Client{
-		Transport: http.DefaultTransport,
-		Timeout:   http.DefaultClient.Timeout,
-	}
-
-	res, err := client.Do(req)
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch: %w", err)
 	}
@@ -48,5 +43,10 @@ func get(ctx context.Context, endpoint, name string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to fetch: %w", err)
 	}
 
-	return io.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	return data, nil
 }
