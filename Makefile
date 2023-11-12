@@ -1,16 +1,18 @@
+include .env
+
 up:
-	./scripts/dockerup.sh
+	@docker compose up -d --build
 
 down:
-	docker compose down --rmi all
+	@docker compose down --rmi all
 
 gen:
-	go generate ./...
+	@go generate ./...
 
 tests:
-	go test -v --race -coverprofile=c.out ./... \
+	@go test -v --race -coverprofile=c.out ./... \
 	&& go tool cover -html=c.out \
 	&& rm c.out
 
-seedkafka:
-	./scripts/seedkafka.sh
+lint:
+	@golangci-lint run ./...
