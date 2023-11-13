@@ -1,0 +1,16 @@
+http:
+  port: 8080
+  idleTimeout: 60s
+  readTimeout: 10s
+  writeTimeout: 10s
+database:
+  url: "postgres://insan1a:myjP7HHlwXhDFm73D7Vf8jtaVVJTNZ@localhost:5432/exile"
+cache:
+  url: "redis://default:lf6Qr63onVdv6F5At1gI6EuZoTHFOn@localhost:6379/0/"
+api:
+  age:
+    url: "https://api.agify.io"
+  gender:
+    url: "https://api.genderize.io"
+  nationality:
+    url: "https://api.nationalize.io"

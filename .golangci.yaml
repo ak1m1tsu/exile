@@ -1,21 +1,12 @@
 run:
-  concurrency: 4
-  timeout: 1m
-  issues-exit-code: 1
-  tests: true
+  concurrency: 8
+  timeout: 5m
+  tests: false
   modules-download-mode: readonly
-  allow-parallel-runners: false
-
-issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
-        - dupl
-        - ireturn
-
+output:
+  format: colored-tab:stdout
+  sort-results: true
 linters:
-  fast: true
   disable-all: true
   enable:
     - errcheck
@@ -23,11 +14,43 @@ linters:
     - govet
     - ineffassign
     - staticcheck
-    - typecheck
     - unused
     - bodyclose
+    - cyclop
+    - dogsled
     - dupl
+    - dupword
     - errname
+    - exhaustruct
+    - exportloopref
     - gci
+    - gochecknoinits
+    - goconst
+    - gocognit
+    - gocyclo
+    - godot
     - gofumpt
+    - gomnd
+    - gosec
     - ireturn
+    - makezero
+    - mirror
+    - nilerr
+    - paralleltest
+    - revive
+    - sqlclosecheck
+    - unparam
+    - wsl
+    - zerologlint
+    - wrapcheck
+issues:
+  fix: true
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+severity:
+  default-severity: error
