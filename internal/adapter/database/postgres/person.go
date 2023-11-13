@@ -21,7 +21,7 @@ func NewPersonRepository(db *postgres.Postgres) *PersonRepository {
 	}
 }
 
-// Store persists redis to the database.
+// Store persists person.
 func (r *PersonRepository) Store(ctx context.Context, person entity.PersonModel) (entity.PersonModel, error) {
 	sql, args, err := person.
 		InsertQuery(r.table).
@@ -42,7 +42,7 @@ func (r *PersonRepository) Store(ctx context.Context, person entity.PersonModel)
 	return person, nil
 }
 
-// FindByID finds redis by ID.
+// FindByID finds person by ID.
 func (r *PersonRepository) FindByID(ctx context.Context, id string) (entity.PersonModel, error) {
 	var person entity.PersonModel
 
@@ -57,6 +57,7 @@ func (r *PersonRepository) FindByID(ctx context.Context, id string) (entity.Pers
 	err = r.db.Pool.
 		QueryRow(ctx, sql, args...).
 		Scan(
+			&person.ID,
 			&person.Name,
 			&person.Surname,
 			&person.Patronymic,
@@ -65,7 +66,7 @@ func (r *PersonRepository) FindByID(ctx context.Context, id string) (entity.Pers
 			&person.Nationality,
 		)
 	if err != nil {
-		return entity.PersonModel{}, fmt.Errorf("failed to scan redis: %w", err)
+		return entity.PersonModel{}, fmt.Errorf("failed to scan row: %w", err)
 	}
 
 	return person, nil

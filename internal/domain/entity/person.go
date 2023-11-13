@@ -13,7 +13,7 @@ type Person struct {
 	Surname     string `validate:"required,alpha"`
 	Patronymic  string `validate:"omitempty,alpha"`
 	Gender      string `validate:"required,oneof=male female"`
-	Nationality string `validate:"required,iso3166_2"`
+	Nationality string `validate:"required,iso3166_1_alpha2"`
 	Age         int    `validate:"required,gt=0,lt=150"`
 }
 
@@ -64,7 +64,7 @@ func (pm PersonModel) InsertQuery(table string) sq.InsertBuilder {
 //	WHERE id = ?
 func (pm PersonModel) FindOneQuery(table string, id string) sq.SelectBuilder {
 	builder := sq.StatementBuilder.
-		Select("name", "surname", "patronymic", "age", "gender", "nationality").
+		Select("id", "name", "surname", "patronymic", "age", "gender", "nationality").
 		From(table).
 		Where(sq.Eq{"id": id})
 

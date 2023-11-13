@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -14,13 +15,45 @@ type CreatePersonDTO struct {
 	Patronymic string `json:"patronymic" validate:"omitempty,alpha"`
 }
 
+// FromRequest fills CreatePersonDTO from request body and validates it.
+func (dto *CreatePersonDTO) FromRequest(r *http.Request) error {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	if err := decoder.Decode(dto); err != nil {
+		return fmt.Errorf("failed to decode url query: %w", err)
+	}
+
+	if err := validator.New().Struct(dto); err != nil {
+		return fmt.Errorf("failed to validate url query: %w", err)
+	}
+
+	return nil
+}
+
 type UpdatePersonDTO struct {
 	Name        string `json:"name" validate:"required,alpha"`
 	Surname     string `json:"surname" validate:"required,alpha"`
 	Patronymic  string `json:"patronymic" validate:"omitempty,alpha"`
 	Gender      string `json:"gender" validate:"required,oneof=male female"`
-	Nationality string `json:"nationality" validate:"required,iso3166_2"`
+	Nationality string `json:"nationality" validate:"required,iso3166_1_alpha2"`
 	Age         int    `json:"age" validate:"required,gt=0,lt=150"`
+}
+
+// FromRequest fills UpdatePersonDTO from request body and validates it.
+func (p *UpdatePersonDTO) FromRequest(r *http.Request) error {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	if err := decoder.Decode(p); err != nil {
+		return fmt.Errorf("failed to decode url query: %w", err)
+	}
+
+	if err := validator.New().Struct(p); err != nil {
+		return fmt.Errorf("failed to validate url query: %w", err)
+	}
+
+	return nil
 }
 
 type PersonView struct {
@@ -43,7 +76,7 @@ type FindPersonParams struct {
 	Surname     string `schema:"surname" validate:"omitempty,alpha"`
 	Patronymic  string `schema:"patronymic" validate:"omitempty,alpha"`
 	Gender      string `schema:"gender" validate:"omitempty,oneof=male female"`
-	Nationality string `schema:"nationality" validate:"omitempty,iso3166_2"`
+	Nationality string `schema:"nationality" validate:"omitempty,iso3166_1_alpha2"`
 	Age         int    `schema:"age" validate:"omitempty,gt=0,lt=150"`
 	Pagination
 }

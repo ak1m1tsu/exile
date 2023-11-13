@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/rs/zerolog/log"
 
 	"github.com/insan1a/exile/internal/domain/entity"
 	"github.com/jackc/pgx/v5"
@@ -64,7 +65,6 @@ func NewPersonService(
 
 func (s *PersonService) Store(ctx context.Context, person entity.Person) (entity.Person, error) {
 	g, gCtx := errgroup.WithContext(ctx)
-
 	g.Go(func() error {
 		data, err := s.ageFetcher.Fetch(gCtx, person.Name)
 		if err != nil {
@@ -96,6 +96,8 @@ func (s *PersonService) Store(ctx context.Context, person entity.Person) (entity
 		if err != nil {
 			return fmt.Errorf("failed to fetch nationality: %w", err)
 		}
+
+		log.Debug().Bytes("nationality response", data).Msg("fetched data from nationality.io")
 
 		if err = json.Unmarshal(data, &person); err != nil {
 			return fmt.Errorf("failed to unmarshal nationality: %w", err)
