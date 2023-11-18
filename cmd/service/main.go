@@ -10,13 +10,13 @@ import (
 	"syscall"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/client"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/config"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/sl"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/log"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/service/person"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/storage"
-	brokerkafka "github.com/romankravchuk/effective-mobile-test-task/internal/storage/broker/kafka"
+	"github.com/insan1a/exile/internal/client"
+	"github.com/insan1a/exile/internal/config"
+	"github.com/insan1a/exile/internal/lib/sl"
+	"github.com/insan1a/exile/internal/log"
+	"github.com/insan1a/exile/internal/service/person"
+	"github.com/insan1a/exile/internal/storage"
+	brokerkafka "github.com/insan1a/exile/internal/storage/broker/kafka"
 )
 
 func main() {

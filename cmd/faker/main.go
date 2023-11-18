@@ -11,8 +11,8 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/go-faker/faker/v4"
 	"github.com/google/uuid"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/config"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/storage"
+	"github.com/insan1a/exile/internal/config"
+	"github.com/insan1a/exile/internal/storage"
 )
 
 type Person struct {

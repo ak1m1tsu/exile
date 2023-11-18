@@ -6,14 +6,14 @@ import (
 	"errors"
 	"time"
 
-	"github.com/romankravchuk/effective-mobile-test-task/internal/client"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/validator"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/models"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/service"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/storage"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/storage/broker"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/storage/person"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/storage/person/pg"
+	"github.com/insan1a/exile/internal/client"
+	"github.com/insan1a/exile/internal/lib/validator"
+	"github.com/insan1a/exile/internal/models"
+	"github.com/insan1a/exile/internal/service"
+	"github.com/insan1a/exile/internal/storage"
+	"github.com/insan1a/exile/internal/storage/broker"
+	"github.com/insan1a/exile/internal/storage/person"
+	"github.com/insan1a/exile/internal/storage/person/pg"
 	"golang.org/x/sync/errgroup"
 )
 

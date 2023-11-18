@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/graphql-go/handler"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/graphql/schema/person"
+	"github.com/insan1a/exile/internal/server/http/graphql/schema/person"
 )
 
 func New(log *slog.Logger, svc person.PeopleServicer) http.Handler {

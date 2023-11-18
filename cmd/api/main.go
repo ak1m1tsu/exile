@@ -11,17 +11,17 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/config"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/sl"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/log"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/server/graphql/person"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/handlers/person/delete"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/handlers/person/get"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/handlers/person/list"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/handlers/person/save"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/handlers/person/update"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/server/middleware"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/service/people"
+	"github.com/insan1a/exile/internal/config"
+	"github.com/insan1a/exile/internal/lib/sl"
+	"github.com/insan1a/exile/internal/log"
+	"github.com/insan1a/exile/internal/server/graphql/person"
+	"github.com/insan1a/exile/internal/server/http/handlers/person/delete"
+	"github.com/insan1a/exile/internal/server/http/handlers/person/get"
+	"github.com/insan1a/exile/internal/server/http/handlers/person/list"
+	"github.com/insan1a/exile/internal/server/http/handlers/person/save"
+	"github.com/insan1a/exile/internal/server/http/handlers/person/update"
+	"github.com/insan1a/exile/internal/server/middleware"
+	"github.com/insan1a/exile/internal/service/people"
 )
 
 func main() {

@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/romankravchuk/effective-mobile-test-task/internal/models"
-	brokermocks "github.com/romankravchuk/effective-mobile-test-task/internal/storage/broker/mocks"
-	cachemocks "github.com/romankravchuk/effective-mobile-test-task/internal/storage/cache/mocks"
-	storagemocks "github.com/romankravchuk/effective-mobile-test-task/internal/storage/person/mocks"
+	"github.com/insan1a/exile/internal/models"
+	brokermocks "github.com/insan1a/exile/internal/storage/broker/mocks"
+	cachemocks "github.com/insan1a/exile/internal/storage/cache/mocks"
+	storagemocks "github.com/insan1a/exile/internal/storage/person/mocks"
 )
 
 func TestNew(t *testing.T) {

@@ -9,10 +9,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/sl"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/models"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/api/response"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/storage/person"
+	"github.com/insan1a/exile/internal/lib/sl"
+	"github.com/insan1a/exile/internal/models"
+	"github.com/insan1a/exile/internal/server/http/api/response"
+	"github.com/insan1a/exile/internal/storage/person"
 )
 
 //go:generate go run github.com/vektra/mockery/v2@v2.20.2 --name PersonGetter --output ./mocks --outpkg mocks

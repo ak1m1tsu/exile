@@ -3,19 +3,20 @@ package people
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	kfk "github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/validator"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/models"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/service"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/storage"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/storage/broker"
-	brokerkafka "github.com/romankravchuk/effective-mobile-test-task/internal/storage/broker/kafka"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/storage/cache"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/storage/cache/redis"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/storage/person"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/storage/person/pg"
+	"github.com/insan1a/exile/internal/lib/validator"
+	"github.com/insan1a/exile/internal/models"
+	"github.com/insan1a/exile/internal/service"
+	"github.com/insan1a/exile/internal/storage"
+	"github.com/insan1a/exile/internal/storage/broker"
+	brokerkafka "github.com/insan1a/exile/internal/storage/broker/kafka"
+	"github.com/insan1a/exile/internal/storage/cache"
+	"github.com/insan1a/exile/internal/storage/cache/redis"
+	"github.com/insan1a/exile/internal/storage/person"
+	"github.com/insan1a/exile/internal/storage/person/pg"
 )
 
 // Option represents the option for people service
@@ -135,59 +136,46 @@ func New(opts ...Option) (*Service, error) {
 func (s *Service) Save(ctx context.Context, p models.Person) error {
 	mp, err := json.Marshal(&p)
 	if err != nil {
-		return err
+		return fmt.Errorf("Service.Save: %w", err)
 	}
 
-	return s.producer.Produce(mp)
+	if err = s.producer.Produce(mp); err != nil {
+		return fmt.Errorf("Service.Save: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) Get(ctx context.Context, id string) (*models.Person, error) {
 	v, found, err := s.cache.Get(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Service.Get: %w", err)
 	}
 	if found {
 		p := models.Person{}
 		if err = json.Unmarshal(v, &p); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Service.Get: %w", err)
 		}
 		return &p, nil
 	}
 
 	p, err := s.people.FindByID(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Service.Get: %w", err)
 	}
 
 	mp, _ := json.Marshal(*p)
 	if err = s.cache.Set(ctx, id, mp, s.cacheTTL); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Service.Get: %w", err)
 	}
 
 	return p, nil
 }
 
 func (s *Service) List(ctx context.Context, filter *models.Filter, query string) ([]models.Person, error) {
-	v, found, err := s.cache.Get(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	if found {
-		p := make([]models.Person, 0)
-		if err = json.Unmarshal(v, &p); err != nil {
-			return nil, err
-		}
-		return p, nil
-	}
-
 	p, err := s.people.List(ctx, filter)
 	if err != nil {
-		return nil, err
-	}
-
-	mp, _ := json.Marshal(p)
-	if err = s.cache.Set(ctx, query, mp, s.cacheTTL); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Service.List: %w", err)
 	}
 
 	return p, nil
@@ -203,13 +191,21 @@ func (s *Service) Update(ctx context.Context, p *models.Person) error {
 
 func (s *Service) Delete(ctx context.Context, id string) error {
 	if err := s.people.Delete(ctx, id); err != nil {
-		return err
+		return fmt.Errorf("Service.Delete: %w", err)
 	}
 
-	return s.cache.Del(ctx, id)
+	if err := s.cache.Del(ctx, id); err != nil {
+		return fmt.Errorf("Service.Delete: %w", err)
+	}
+
+	return nil
 }
 
 // Close flushes and closes the producer
 func (s *Service) Close() error {
-	return s.producer.Close()
+	if err := s.producer.Close(); err != nil {
+		return fmt.Errorf("Service.Close: %w", err)
+	}
+
+	return nil
 }

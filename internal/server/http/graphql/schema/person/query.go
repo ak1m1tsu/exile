@@ -5,12 +5,12 @@ import (
 	"log/slog"
 
 	"github.com/graphql-go/graphql"
+	"github.com/insan1a/exile/internal/lib/sl"
+	"github.com/insan1a/exile/internal/lib/validator"
+	"github.com/insan1a/exile/internal/models"
+	"github.com/insan1a/exile/internal/server/http/handlers/person/get"
+	"github.com/insan1a/exile/internal/server/http/handlers/person/list"
 	"github.com/mitchellh/mapstructure"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/sl"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/validator"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/models"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/handlers/person/get"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/handlers/person/list"
 )
 
 func List(log *slog.Logger, listter list.PersonLister) func(graphql.ResolveParams) (interface{}, error) {

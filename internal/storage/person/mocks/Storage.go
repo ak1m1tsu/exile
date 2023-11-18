@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	models "github.com/romankravchuk/effective-mobile-test-task/internal/models"
+	models "github.com/insan1a/exile/internal/models"
 	mock "github.com/stretchr/testify/mock"
 )
 

@@ -1,5 +1,7 @@
+include .env
+
 up:
-	./scripts/dockerup.sh
+	docker compose up -d --build
 
 down:
 	docker compose down --rmi all

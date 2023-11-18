@@ -10,11 +10,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/sl"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/validator"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/models"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/api/response"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/storage/person"
+	"github.com/insan1a/exile/internal/lib/sl"
+	"github.com/insan1a/exile/internal/lib/validator"
+	"github.com/insan1a/exile/internal/models"
+	"github.com/insan1a/exile/internal/server/http/api/response"
+	"github.com/insan1a/exile/internal/storage/person"
 )
 
 //go:generate go run github.com/vektra/mockery/v2@v2.20.2 --name PersonUpdater --output ./mocks --outpkg mocks
@@ -34,7 +34,7 @@ func New(log *slog.Logger, updater PersonUpdater) func(http.ResponseWriter, *htt
 
 	type resp struct {
 		response.Response
-		models.Person `json:"person,omitempty"`
+		Person *models.Person `json:"person,omitempty"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
@@ -103,7 +103,7 @@ func New(log *slog.Logger, updater PersonUpdater) func(http.ResponseWriter, *htt
 
 		render.JSON(w, r, resp{
 			Response: response.OK(),
-			Person:   p,
+			Person:   &p,
 		})
 	}
 }

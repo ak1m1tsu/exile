@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/insan1a/exile/internal/storage"
 	"github.com/redis/go-redis/v9"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/storage"
 )
 
 type Storage struct {

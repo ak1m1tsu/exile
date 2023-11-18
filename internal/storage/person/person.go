@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/romankravchuk/effective-mobile-test-task/internal/models"
+	"github.com/insan1a/exile/internal/models"
 )
 
 var (

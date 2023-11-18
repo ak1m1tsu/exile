@@ -60,7 +60,7 @@ services:
     image: confluentinc/cp-kafka:7.5.0
     container_name: broker
     ports:
-      - "9092:9092"
+      - "9092"
     networks:
       - worknet
     environment:
@@ -82,10 +82,10 @@ services:
   postgres:
     build:
       context: .
-      dockerfile: ./docker/postgres/Dockerfile
+      dockerfile: build/postgres/Dockerfile
     container_name: db
     ports:
-      - "5432:5432"
+      - "7777:5432"
     networks:
       - worknet
     volumes:

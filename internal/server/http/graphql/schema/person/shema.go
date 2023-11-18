@@ -4,11 +4,11 @@ import (
 	"log/slog"
 
 	"github.com/graphql-go/graphql"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/handlers/person/delete"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/handlers/person/get"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/handlers/person/list"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/handlers/person/save"
-	"github.com/romankravchuk/effective-mobile-test-task/internal/server/http/handlers/person/update"
+	"github.com/insan1a/exile/internal/server/http/handlers/person/delete"
+	"github.com/insan1a/exile/internal/server/http/handlers/person/get"
+	"github.com/insan1a/exile/internal/server/http/handlers/person/list"
+	"github.com/insan1a/exile/internal/server/http/handlers/person/save"
+	"github.com/insan1a/exile/internal/server/http/handlers/person/update"
 )
 
 //go:generate go run github.com/vektra/mockery/v2@v2.20.2 --name Storage --output ./mocks --outpkg mocks

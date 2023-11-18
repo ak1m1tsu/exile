@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/romankravchuk/effective-mobile-test-task/internal/lib/apitools"
+	"github.com/insan1a/exile/internal/lib/apitools"
 )
 
 //go:generate go run github.com/vektra/mockery/v2@v2.20.2 --name Fetcher --output ./mocks --outpkg mocks
